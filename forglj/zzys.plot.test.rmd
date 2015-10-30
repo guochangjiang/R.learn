@@ -1,0 +1,13 @@
+```{r}
+library("ggplot2")
+#read orgin data
+data0=read.table("zzys.origin.leaf.out", header=TRUE)
+
+#read change data
+data1=read.table("changed.out", header=TRUE)
+qplot(data1$Sample, data1$Expression, geom = "boxplot")
+qplot(data1$GeneID, data1$Expression, color = data1$Sample, geom = "point")
+qplot(data1$Sample, data1$Expression, geom = "jitter",alpha = I(1/5))
+qplot(as.numeric(data1$Sample),data1$Expression, color = data1$GeneID) + geom_line()
+
+```
