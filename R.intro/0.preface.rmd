@@ -1,0 +1,12 @@
+##序言
+> 一般用户只要看完此本`《R 导论》`，并运行上面的例子，就足以解决大部分问题了。 
+
+### R的五份关键文档
+
+1. *An Introduction to R*  
+2. *R Data Import/Export*  
+3. *The R language definition*  
+4. *Writing R Extensions*  
+5. *R installation and Administration/R FAQ*
+
+* 另一个入门用的R读物——Emmanuel Paradis的R for beginners.

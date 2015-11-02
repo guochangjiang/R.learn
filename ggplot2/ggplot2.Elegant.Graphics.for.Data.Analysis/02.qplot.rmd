@@ -1,0 +1,102 @@
+## 第二章 qplot入门
+
+### 2.1 qplot简介
+作为`ggplot2`的第一个函数，`qplot`表示快速作图，可通过简洁而富有表达力的代码创建各种复杂图形。
+
+### 2.2 数据集
+本章大多作图将使用同一个数据源。`diamonds`数据集包含约54,000颗钻石的价格和质量信息，数据存放在ggplot2软件包中。这组数据涵盖反映钻石质量的四个“C"——克拉(carat)、切工(cut)、颜色(color)和净度(clarity)，以及五个物理指标——深度(depth)、钻面宽度(table)、x、y和z，如图2.1所示。
+![图 2.1](Fig2.1.png)
+
+另一个数据集`dsmall`是原始数据一个容量为100的随机样本，可用其进行小数据的作图演示。
+```{r}
+library("ggplot2")
+set.seed(1410) ##让样本可重复
+dsmall <- diamonds[sample(nrow(diamonds),100),]
+#dsmall
+```
+
+### 2.3 基本用法
+与plot类似，`qplot()`的前两个参数是x和y，分别代表图中所画对象的x坐标和y坐标。此外，还有一个可选的`data`参数，如指定则qplot()将会先在该数据框内查找变量名，然后在R的工作空间内进行变量搜索。推荐使用data参数，因为将相关数据放置在同一个数据框内是一个良好的习惯。一个简单示例，展现钻石价格和重量之间的关系：
+```{r}
+qplot(carat,price,data = diamonds)
+#qplot(carat,price,data = dsmall)
+```
+显然，图形展示了变量之间很强的相关性和一些异常值。此外，纵向存在一些有趣的条纹，暗示这种相关性可能是指数型的，又由于qplot()支持变量函数为参数，因此可以log(price)对log(carat)进行作图：
+```{r}
+qplot(log(carat),log(price),data = diamonds)
+```
+
+函数的参数可是已有变量的某种组合，如钻石体积与重量之间的关系：
+```{r}
+qplot(carat,x*y*z,data = diamonds)
+```
+
+### 2.4 颜色、大小、形状等图形属性
+
+与plot()不同，qplot()可自动完成图形属性(如颜色、形状等)设置。比如向钻石重量和价格的散点图添加颜色和切工信息：
+```{r}
+qplot(carat,price,data = dsmall, colour = color) #散点图中添加颜色信息
+qplot(carat,price,data = dsmall, shape = cut) #散点图中添加切工信息
+```
+颜色、大小和形状是图形属性的具体例子，是影响图形的数据属性。每一个图形属性都对应一个称为**标度**的函数，其作用是将数据的取值映射到该图形属性的有效取值。
+
+除了由ggplot2自动设定属性外，还可利用`I()`手动设定图形属性，例如，`colour = I("red")`或`size = I(2)`。
+
+对于大数据而言，使用半透明的颜色可以有效减轻图形元素重叠的现象。创建半透明颜色可使用`alpha`图形属性，但取值从0（完全透明）变动到1（完全不透明）。通常透明度可以用分数来进行表示，例如1/10，其分母表示经过多少次重叠后颜色将变得不透明。（*其实是不透明度*）
+
+```{r}
+qplot(carat,price,data = diamonds,alpha=I(1/10))
+qplot(carat,price,data = diamonds,alpha=I(1/100))
+```
+
+### 2.5 几何对象
+qplot除了画散点图外，通过改变几何对象可以画出任何一种类型的图形。**几何对象(geom)**描述应用何种对象来对数据进行展示，其中有些几何对象关联了相应的统计变换。例如，直方图相当于分组计数再加上条形的几何对象。其中最常用的几种几何对象(二维变量关系)如下：
+
++ `geom = "point"`绘制散点图，指定x和y后，qplot()默认画散点图；
++ `geom = "smooth"`拟合一条平滑曲线，并将曲线和标准误展示在图中；
++ `geom = "boxplot"`绘制箱线胡须图；
++ `geom = "path" 和 geom = "line"`可以在数据点间绘制连线；
+
+而对于一维的分布，几何对象的选择是由变量的类型指定的：
+
++ 对于连续变量，`geom = "histogram"`绘制直方图，`geom = "freqpoly"`绘制频率多边形，`geom = "density"`绘制密度曲线。若只有x参数传递给qplot()，那么默认绘制直方图。
++ 对于离散变量，`geom = "bar"`绘制条形图。
+
+#### 2.5.1 添加平滑曲线
+可使用`c()`函数将多个几何对象组成一个向量传递给`geom`:
+```{r}
+qplot(carat,price,data = dsmall, geom = c("point","smooth"))
+qplot(carat,price,data = diamonds, geom = c("point","smooth"))
+```
+其中，灰色部分表示逐点置信区间。如不绘制标准误，可使用参数`se = FALSE`。此外，利用`method`参数可选择多种平滑器：
+
++ `method = "loess"`,当n较小时是默认选项，使用局部回归。曲线的平滑程度由`span`参数控制，其取值范围从0（很不平滑）到1（很平滑），如：
+```{r}
+qplot(carat,price,data = dsmall,geom = c("point","smooth"),span = 0.2)
+qplot(carat,price,data = dsmall,geom = c("point","smooth"),span = 1.0)
+```
+
+loess对大数据并不适用，其内存消耗为$O(n^2)$.
+
++ 当$n>1000$时，可使用`method = "gam", formula = y ~ s(x)`调用`mgcv`包拟合一个广义可加模型。这与函数`lm`使用样条类似。对于大数据，使用公式$y ~ s(x, bs = "cs")$，这是数据量超过1000时的默认选项。
+```{r mgsv}
+library("mgcv")
+qplot(carat,price,data = dsmall,geom = c("point","smooth"),method = "gam", formula = y ~ s(x))
+qplot(carat,price,data = dsmall,geom = c("point","smooth"),method = "gam", formula = y ~ s(x,bs="cs"))
+```
+
++ `method = "lm"`拟合的是线性模型，默认拟合一条直线。通过指定`formula = y ~ poly(x,2)`来拟合二次多项式或加载`splines`包以使用自然样条：`formula = y ~ ns(x,2)`，其中第二个参数是自由度，其取值越大，曲线的波动就越大。
+```{r splines}
+library("splines")
+qplot(carat,price,data = dsmall,geom = c("point","smooth"),method = "lm")
+qplot(carat,price,data = dsmall,geom = c("point","smooth"),method = "lm",formula = y ~ ns(x,5))
+```
+
++ `method = "rlm"`与lm类似，但采用更稳健的拟合算法，使得结果对异常值不太敏感。该方法依赖`MASS`包：
+```{r MASS}
+library("MASS")
+qplot(carat,price,data = dsmall, geom = c("point","smooth"), method = "rlm")
+```
+
+#### 2.5.2 箱线图和扰动点图
+如果数据集中包含分类变量和连续变量，那么连续变量可能随分类变量而变化，此时可用箱线图和扰动点图

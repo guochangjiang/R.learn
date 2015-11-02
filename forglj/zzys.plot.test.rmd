@@ -2,7 +2,9 @@
 library("ggplot2")
 #read orgin data
 data0=read.table("zzys.origin.leaf.out", header=TRUE)
-
+sd(data0$LYP9)
+sd(data0$N9311)
+sd(data0$PA64s)
 #read change data
 data1=read.table("changed.out", header=TRUE)
 qplot(data1$Sample, data1$Expression, geom = "boxplot")
